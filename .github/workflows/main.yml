@@ -1,0 +1,44 @@
+name: Free Proxy Server
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */6 * * *'
+
+jobs:
+  proxy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+      - name: Install V2Ray
+        run: |
+          wget https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-linux-64.zip
+          unzip v2ray-linux-64.zip -d v2ray
+          chmod +x v2ray/v2ray
+      
+      - name: Create Config
+        run: |
+          cat > config.json <<EOF
+          {
+            "inbounds": [{
+              "port": 8080,
+              "protocol": "vmess",
+              "settings": {
+                "clients": [{
+                  "id": "$(uuidgen)",
+                  "alterId": 0
+                }]
+              }
+            }],
+            "outbounds": [{
+              "protocol": "freedom"
+            }]
+          }
+          EOF
+      
+      - name: Run Proxy
+        run: |
+          ./v2ray/v2ray -config=config.json &
+          sleep 21600
